@@ -1,13 +1,6 @@
 export type Game = {
-    state: 'IDLE'
-} | {
-    state: 'PLAYING'
     activePlayer: Player
     opponent: Player
-} | {
-    state: 'END'
-    winner: Player
-    loser: Player
 }
 
 export type Player = {
@@ -38,7 +31,6 @@ const newPlayer = (): Player => ({
 })
 
 export const start = (): Game => ({
-    state: 'PLAYING',
     activePlayer: newPlayer(),
     opponent: newPlayer()
 })
