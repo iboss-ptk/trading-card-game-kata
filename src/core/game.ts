@@ -27,3 +27,16 @@ export type Card = {
     damage: number
     manaCost: number
 }
+
+const newPlayer = (): Player => ({
+    health: 30,
+    mana: [],
+    deck: [],
+    cards: []
+})
+
+export const start = (): Game => ({
+    state: 'PLAYING',
+    activePlayer: newPlayer(),
+    opponent: newPlayer()
+})
