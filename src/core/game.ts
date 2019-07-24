@@ -1,5 +1,6 @@
 import R from 'ramda'
 import shuffle from 'lodash/shuffle'
+import { subtractList } from '../lib/list'
 
 export type Game = {
     activePlayer: Player
@@ -41,19 +42,6 @@ export const start = (): Game => ({
 const draw = (count: number, deck: Card[]) =>
     R.take(count, shuffle(deck))
 
-const subtractList = <T>(a: T[], b: T[]) => {
-    let _a: T[] = R.clone(a)
-    let _b: T[] = R.clone(b)
-
-    _b.forEach(e => {
-        const i = R.indexOf(e, _a)
-        if (i !== -1) {
-            _a.splice(i, 1)
-        }
-    })
-
-    return _a
-}
 
 const initialPlayerDraw = (player: Player) => {
     const drawed = draw(3, player.deck)
