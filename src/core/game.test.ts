@@ -1,5 +1,7 @@
 import { newGame, initialDraw } from "./game";
 import { Player, newPlayer } from './player'
+import { card } from "./card";
+import 'jest-extended'
 
 describe('Game', () => {
     describe('preparation', () => {
@@ -11,20 +13,19 @@ describe('Game', () => {
         })
 
         test('from the deck each player receives 3 random cards has his initial hand', () => {
-            const initialDeckManaCosts = [0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 8]
+            const initialDeck = [0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 8]
+                .map(card)
+
             const initialDrawed = initialDraw(game)
 
             const combineHandAndDeck = (player: Player) =>
-                player.deck
-                    .concat(player.hand)
-                    .map(card => card.manaCost)
-                    .sort()
+                player.deck.concat(player.hand)
 
             expect(initialDrawed.activePlayer.hand.length).toBe(3)
-            expect(combineHandAndDeck(initialDrawed.activePlayer)).toEqual(initialDeckManaCosts)
+            expect(combineHandAndDeck(initialDrawed.activePlayer)).toIncludeAllMembers(initialDeck)
 
             expect(initialDrawed.opponent.hand.length).toBe(3)
-            expect(combineHandAndDeck(initialDrawed.opponent)).toEqual(initialDeckManaCosts)
+            expect(combineHandAndDeck(initialDrawed.opponent)).toIncludeAllMembers(initialDeck)
         })
     })
 })

@@ -6,3 +6,5 @@ export type Card = {
 }
 export const draw = (count: number, deck: Card[]) =>
     R.take(count, shuffle(deck))
+
+export const card = (manaCost: number) => ({ manaCost })

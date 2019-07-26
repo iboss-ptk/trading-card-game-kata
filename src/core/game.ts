@@ -1,5 +1,5 @@
 import R from 'ramda'
-import { Player, newPlayer, initialPlayerDraw } from './player'
+import { Player, newPlayer, drawCard } from './player'
 
 export type Game = {
     activePlayer: Player
@@ -14,8 +14,8 @@ export const newGame = (): Game => ({
 export const initialDraw = (game: Game): Game => R.mergeRight(
     game,
     {
-        activePlayer: initialPlayerDraw(game.activePlayer),
-        opponent: initialPlayerDraw(game.opponent)
+        activePlayer: drawCard(3, game.activePlayer),
+        opponent: drawCard(3, game.opponent)
     }
 )
 
