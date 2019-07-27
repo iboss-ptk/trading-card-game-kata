@@ -1,7 +1,7 @@
 import { Player, newPlayer, drawCard, activate, noMana, filledMana, manaSlots } from "./player";
 import { cards, card } from './card'
 
-const expectDraw = (drawCount: number, before: Player, after: Player) => {
+export const expectDraw = (drawCount: number, before: Player, after: Player) => {
     expect(after.hand.length).toBe(before.hand.length + drawCount)
     expect(after.deck.length).toBe(before.deck.length - drawCount)
     expect(after.deck.concat(after.hand)).toIncludeSameMembers(before.deck.concat(before.hand))
