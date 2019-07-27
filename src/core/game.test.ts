@@ -1,7 +1,6 @@
 import { newGame, initialDraw } from "./game";
 import { Player, newPlayer } from './player'
 import { card } from "./card";
-import 'jest-extended'
 
 describe('Game', () => {
     describe('preparation', () => {

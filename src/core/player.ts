@@ -1,46 +1,40 @@
 import R from 'ramda'
 import { subtractList } from '../lib/list'
-import { Card, draw, card } from './card'
-
+import { Card, draw, card, cards } from './card'
 
 export type Player = {
     health: number
-    // - start: 30
     mana: ManaSlot[]
-    // - start: 0 max 10
     deck: Card[]
-    // - start: 20 damage cards, mana costs: 0,0,1,1,2,2,2,3,3,3,3,4,4,4,5,5,6,6,7,8
     hand: Card[]
-    // - start: 3 random cards
 }
+
+// Mana
 
 export type ManaSlot = 'EMPTY' | 'FILLED'
 
+const MAX_MANA_SLOT = 10
+const MAX_HAND = 5
 
-const has = (count: number, card: Card) => R.repeat(card, count)
+export const noMana = R.repeat<ManaSlot>('EMPTY')
+export const filledMana = R.repeat<ManaSlot>('FILLED')
+export const manaSlots = (...mss: ManaSlot[][]) => R.flatten(mss)
 
-const initialDeck = R.flatten([
-    has(2, card(0)),
-    has(2, card(1)),
-    has(3, card(2)),
-    has(4, card(3)),
-    has(3, card(4)),
-    has(2, card(5)),
-    has(2, card(6)),
-    has(1, card(7)),
-    has(1, card(8)),
-])
+// Deck
 
-export const drawCard = (count: number, player: Player) => {
-    const drawed = draw(count, player.deck)
-    return R.mergeRight(
-        player,
-        {
-            deck: subtractList(player.deck, drawed),
-            hand: player.hand.concat(drawed)
-        }
-    )
-}
+const initialDeck = cards(
+    [2, card(0)],
+    [2, card(1)],
+    [3, card(2)],
+    [4, card(3)],
+    [3, card(4)],
+    [2, card(5)],
+    [2, card(6)],
+    [1, card(7)],
+    [1, card(8)],
+)
+
+// init
 
 export const newPlayer = (): Player => ({
     health: 30,
@@ -49,6 +43,47 @@ export const newPlayer = (): Player => ({
     hand: []
 })
 
-// dealDamage :: number -> Player -> Player
+// activation actions
+
+const incManaSlotAndFill = (player: Player) => R.mergeRight(
+    player,
+    {
+        mana: filledMana(R.min(MAX_MANA_SLOT, player.mana.length + 1)),
+    })
+
+const bleedWhenDeckIsEmpty = (player: Player) => R.mergeRight(
+    player,
+    {
+        health: R.isEmpty(player.deck)
+            ? player.health - 1
+            : player.health
+    }
+)
+
+export const drawCard = R.curry((count: number, player: Player) => {
+    const drawed = draw(count, player.deck)
+    return R.mergeRight(
+        player,
+        {
+            deck: subtractList(player.deck, drawed),
+            hand: player.hand.concat(drawed)
+        }
+    )
+})
+
+const overlord = (player: Player) => R.mergeRight(
+    player,
+    {
+        hand: R.take(MAX_HAND, player.hand)
+    }
+)
+
+export const activate: (player: Player) => Player = R.pipe(
+    incManaSlotAndFill,
+    bleedWhenDeckIsEmpty,
+    drawCard(1),
+    overlord
+)
+
+// takeDamage :: number -> Player -> Player
 // playCard :: Player -> Player -> Card -> (Player, Player)
-// incManaSlot :: Player -> Player

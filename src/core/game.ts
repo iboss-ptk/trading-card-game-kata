@@ -19,6 +19,7 @@ export const initialDraw = (game: Game): Game => R.mergeRight(
     }
 )
 
+// newGame => initialDraw => activate()
 
 // endGameIf :: (ActiveGame -> boolean) -> ActiveGame -> ActiveGame | EndedGame
 // swapActivePlayer :: Game -> Game
