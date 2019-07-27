@@ -85,5 +85,26 @@ export const activate: (player: Player) => Player = R.pipe(
     overlord
 )
 
-// takeDamage :: number -> Player -> Player
-// playCard :: Player -> Player -> Card -> (Player, Player)
+export const remainingMana = (player: Player) =>
+    R.filter(R.equals<ManaSlot>('FILLED'), player.mana).length
+
+const useMana = (requiredMana: number, player: Player): ManaSlot[] => {
+    const remainingManaAfterUsed = remainingMana(player) - requiredMana
+    return R.flatten([
+        R.repeat<ManaSlot>('EMPTY', player.mana.length - remainingManaAfterUsed),
+        R.repeat<ManaSlot>('FILLED', remainingManaAfterUsed)
+    ])
+}
+
+export const useCard = (card: Card, player: Player) => R.mergeRight(
+    player,
+    {
+        mana: useMana(card.manaCost, player),
+        hand: subtractList(player.hand, [card])
+    }
+)
+
+export const dealDamage = (damage: number, player: Player) => R.mergeRight(
+    player,
+    { health: player.health - damage }
+)

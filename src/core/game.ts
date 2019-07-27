@@ -1,6 +1,8 @@
 import R from 'ramda'
-import { Player, newPlayer, drawCard, activate } from './player'
+import { Player, newPlayer, drawCard, activate, useCard, dealDamage, remainingMana } from './player'
 import { Card } from './card';
+
+// Game model
 
 export type Game = {
     activePlayer: Player
@@ -20,6 +22,7 @@ export const initialDraw = (game: Game): Game => R.mergeRight(
     }
 )
 
+// Game state and actions
 
 type Status =
     | 'IDLE'
@@ -42,7 +45,7 @@ type Action =
 export const Action = {
     start: (): Action => ({ type: 'START' }),
     swapTurn: (): Action => ({ type: 'SWAP_TURN' }),
-    playCard: (card: Card) => ({ type: 'PLAY_CARD', card })
+    playCard: (card: Card): Action => ({ type: 'PLAY_CARD', card })
 }
 
 type GameState = {
@@ -55,6 +58,42 @@ const initGameState: GameState = {
     game: newGame()
 }
 
+// update utilities
+
+const fix = (fixedGameState: GameState) => (_gameState: GameState) => fixedGameState
+
+const updateIf = (
+    condition: (gameState: GameState) => boolean,
+    update: (gameState: GameState) => GameState
+) => (gameState: GameState) =>
+        condition(gameState) ? update(gameState) : gameState
+
+const updateAtMostOneOf = (...configs: {
+    condition: (gameState: GameState) => boolean,
+    update: (gameState: GameState) => GameState
+}[]) => (gameState: GameState): GameState => {
+    const firstFound = R.head(configs.filter(c => c.condition(gameState)))
+    return R.isNil(firstFound)
+        ? gameState
+        : firstFound.update(gameState)
+}
+
+const changeStatus = R.curry((
+    newStatus: Status,
+    gameState: GameState
+) => R.mergeRight(gameState, { status: newStatus }))
+
+
+// conditions
+
+const activePlayerHealthBelowOrEqZero = (gameState: GameState) => gameState.game.activePlayer.health <= 0
+const opponentHealthBelowOrEqZero = (gameState: GameState) => gameState.game.opponent.health <= 0
+const emptyHand = (gameState: GameState) => R.isEmpty(gameState.game.activePlayer.hand)
+const statusIs = (status: Status) => (gameState: GameState) => gameState.status === status
+
+
+// game state updaters
+
 const swapAndActivate = (gameState: GameState) => R.mergeRight(
     gameState,
     {
@@ -66,34 +105,68 @@ const swapAndActivate = (gameState: GameState) => R.mergeRight(
     }
 )
 
-const changeStatusIf = R.curry((
-    condition: (gameState: GameState) => boolean,
-    newStatus: Status,
-    gameState: GameState
-) => R.mergeRight(
-    gameState, { status: condition(gameState) ? newStatus : gameState.status }
-))
+const swapTurn = R.pipe(
+    swapAndActivate,
+    updateIf(
+        activePlayerHealthBelowOrEqZero,
+        changeStatus(Status.ACTIVE_PLAYER_LOSES)
+    )
+)
 
-const activePlayerHealthBelowOrEqZero = (gameState: GameState) => gameState.game.activePlayer.health <= 0
+const playCard = (card: Card) => (gameState: GameState) => {
+    const cardExistsInHand = R.find(R.equals(card), gameState.game.activePlayer.hand) !== undefined
+    const enoughMana = remainingMana(gameState.game.activePlayer) >= card.manaCost
 
-export const updateGameState = (action: Action, gameState: GameState = initGameState) => {
+    if (cardExistsInHand && enoughMana) {
+        return R.mergeRight(
+            gameState,
+            {
+                game: {
+                    activePlayer: useCard(card, gameState.game.activePlayer),
+                    opponent: dealDamage(card.manaCost, gameState.game.opponent)
+                }
+            }
+        )
+    } else {
+        return gameState
+    }
+}
+
+
+// main state updater
+
+export const updateGameState = (action: Action, gameState: GameState = initGameState): GameState => {
     switch (action.type) {
         case 'START':
-            return R.mergeRight(
-                gameState,
-                {
-                    status: Status.PLAYING,
-                    game: initialDraw(newGame())
-                }
-            )
+            return fix({
+                status: Status.PLAYING,
+                game: initialDraw(newGame())
+            })(gameState)
+
         case 'SWAP_TURN':
-            return R.pipe(
-                swapAndActivate,
-                changeStatusIf(
-                    activePlayerHealthBelowOrEqZero,
-                    Status.ACTIVE_PLAYER_LOSES
-                )
+            return updateIf(
+                statusIs(Status.PLAYING),
+                swapTurn
             )(gameState)
+
+
+        case 'PLAY_CARD':
+            return updateIf(
+                statusIs(Status.PLAYING),
+                R.pipe(
+                    playCard(action.card),
+                    updateAtMostOneOf(
+                        {
+                            condition: opponentHealthBelowOrEqZero,
+                            update: changeStatus(Status.ACTIVE_PLAYER_WINS)
+                        },
+                        {
+                            condition: emptyHand,
+                            update: swapTurn
+                        }
+                    ),
+                ))(gameState)
+
         default:
             return gameState
     }
