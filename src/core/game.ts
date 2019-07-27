@@ -135,20 +135,19 @@ const playCard = (card: Card) => (gameState: GameState) => {
 
 // main state updater
 
-export const updateGameState = (action: Action, gameState: GameState = initGameState): GameState => {
+export const updateGameState = (action: Action, gameState: GameState = initGameState): GameState => (() => {
     switch (action.type) {
         case 'START':
             return fix({
                 status: Status.PLAYING,
                 game: initialDraw(newGame())
-            })(gameState)
+            })
 
         case 'SWAP_TURN':
             return updateIf(
                 statusIs(Status.PLAYING),
                 swapTurn
-            )(gameState)
-
+            )
 
         case 'PLAY_CARD':
             return updateIf(
@@ -165,9 +164,9 @@ export const updateGameState = (action: Action, gameState: GameState = initGameS
                             update: swapTurn
                         }
                     ),
-                ))(gameState)
+                ))
 
         default:
-            return gameState
+            return R.identity
     }
-}
+})()(gameState)
