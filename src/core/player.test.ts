@@ -1,4 +1,4 @@
-import { Player, newPlayer, drawCard, activate, noMana, filledMana, manaSlots } from "./player";
+import { Player, newPlayer, drawCard, activate, emptyMana, filledMana, manaSlots } from "./player";
 import { cards, card } from './card'
 
 export const expectDraw = (drawCount: number, before: Player, after: Player) => {
@@ -82,7 +82,7 @@ describe('Player', () => {
                     ...newPlayer(),
                     mana: manaSlots(
                         filledMana(1),
-                        noMana(2)
+                        emptyMana(2)
                     )
                 }
 
@@ -94,7 +94,7 @@ describe('Player', () => {
                     ...newPlayer(),
                     mana: manaSlots(
                         filledMana(6),
-                        noMana(4)
+                        emptyMana(4)
                     )
                 }
 

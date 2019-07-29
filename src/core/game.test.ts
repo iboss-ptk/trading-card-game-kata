@@ -1,5 +1,5 @@
 import { newGame, updateGameState, Action, Status } from "./game";
-import { Player, newPlayer, filledMana, manaSlots, noMana } from './player'
+import { Player, newPlayer, filledMana, manaSlots, emptyMana } from './player'
 import { card, cards } from "./card";
 import { expectDraw } from "./player.test";
 import { subtractList } from "../lib/list";
@@ -116,7 +116,7 @@ describe('Game', () => {
                 expect(updatedGameState.game.activePlayer.hand).toIncludeSameMembers(remainingHand)
                 expect(updatedGameState.game.activePlayer.mana).toIncludeSameMembers(manaSlots(
                     filledMana(2),
-                    noMana(1)
+                    emptyMana(1)
                 ))
                 expect(updatedGameState.game.opponent.health).toBe(gameState.game.opponent.health - cardToPlay.manaCost)
             })

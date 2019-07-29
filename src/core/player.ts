@@ -16,9 +16,23 @@ export type ManaSlot = 'EMPTY' | 'FILLED'
 const MAX_MANA_SLOT = 10
 const MAX_HAND = 5
 
-export const noMana = R.repeat<ManaSlot>('EMPTY')
+export const emptyMana = R.repeat<ManaSlot>('EMPTY')
 export const filledMana = R.repeat<ManaSlot>('FILLED')
 export const manaSlots = (...mss: ManaSlot[][]) => R.flatten(mss)
+
+export const remainingMana = (player: Player) =>
+    R.filter(R.equals<ManaSlot>('FILLED'), player.mana).length
+
+const totalMana = (player: Player) =>
+    player.mana.length
+
+const useMana = (requiredMana: number, player: Player): ManaSlot[] => {
+    const remainingManaAfterUsed = remainingMana(player) - requiredMana
+    return manaSlots(
+        emptyMana(totalMana(player) - remainingManaAfterUsed),
+        filledMana(remainingManaAfterUsed)
+    )
+}
 
 // Deck
 
@@ -84,17 +98,6 @@ export const activate: (player: Player) => Player = R.pipe(
     drawCard(1),
     overlord
 )
-
-export const remainingMana = (player: Player) =>
-    R.filter(R.equals<ManaSlot>('FILLED'), player.mana).length
-
-const useMana = (requiredMana: number, player: Player): ManaSlot[] => {
-    const remainingManaAfterUsed = remainingMana(player) - requiredMana
-    return R.flatten([
-        R.repeat<ManaSlot>('EMPTY', player.mana.length - remainingManaAfterUsed),
-        R.repeat<ManaSlot>('FILLED', remainingManaAfterUsed)
-    ])
-}
 
 export const useCard = (card: Card, player: Player) => R.mergeRight(
     player,
